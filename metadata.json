@@ -1,0 +1,7 @@
+{
+  "name": "Rich Hamster Household Account Book",
+  "description": "A luxury-themed household account book managed by a rich hamster AI assistant. Features a full calendar up to 2030, transaction tracking, and an interactive draggable AI chatbot.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
