@@ -14,25 +14,31 @@ const App: React.FC = () => {
   const safeParse = (key: string, defaultValue: any) => {
     try {
       const saved = localStorage.getItem(key);
-      return saved ? JSON.parse(saved) : defaultValue;
+      if (!saved) return defaultValue;
+      return JSON.parse(saved);
     } catch (e) {
+      console.warn(`Localstorage parse error for ${key}`, e);
       return defaultValue;
     }
   };
 
-  const [transactions, setTransactions] = useState<Transaction[]>(() => safeParse('rich_hamster_ledger_tx', []));
-  const [fixedExpenses, setFixedExpenses] = useState<FixedExpense[]>(() => safeParse('rich_hamster_fixed', []));
-  const [savings, setSavings] = useState<Saving[]>(() => safeParse('rich_hamster_savings', []));
-  const [loans, setLoans] = useState<Loan[]>(() => safeParse('rich_hamster_loans', []));
+  const [transactions, setTransactions] = useState<Transaction[]>(() => safeParse('rich_hamster_tx_v2', []));
+  const [fixedExpenses, setFixedExpenses] = useState<FixedExpense[]>(() => safeParse('rich_hamster_fixed_v2', []));
+  const [savings, setSavings] = useState<Saving[]>(() => safeParse('rich_hamster_savings_v2', []));
+  const [loans, setLoans] = useState<Loan[]>(() => safeParse('rich_hamster_loans_v2', []));
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
-  useEffect(() => localStorage.setItem('rich_hamster_ledger_tx', JSON.stringify(transactions)), [transactions]);
-  useEffect(() => localStorage.setItem('rich_hamster_fixed', JSON.stringify(fixedExpenses)), [fixedExpenses]);
-  useEffect(() => localStorage.setItem('rich_hamster_savings', JSON.stringify(savings)), [savings]);
-  useEffect(() => localStorage.setItem('rich_hamster_loans', JSON.stringify(loans)), [loans]);
+  useEffect(() => localStorage.setItem('rich_hamster_tx_v2', JSON.stringify(transactions)), [transactions]);
+  useEffect(() => localStorage.setItem('rich_hamster_fixed_v2', JSON.stringify(fixedExpenses)), [fixedExpenses]);
+  useEffect(() => localStorage.setItem('rich_hamster_savings_v2', JSON.stringify(savings)), [savings]);
+  useEffect(() => localStorage.setItem('rich_hamster_loans_v2', JSON.stringify(loans)), [loans]);
 
   const handleAddTransaction = (data: Omit<Transaction, 'id'>) => {
-    setTransactions(prev => [...prev, { ...data, id: Math.random().toString(36).substring(7) }]);
+    const newTx: Transaction = {
+      ...data,
+      id: Math.random().toString(36).substring(2, 11)
+    };
+    setTransactions(prev => [...prev, newTx]);
   };
 
   const changeMonth = (offset: number) => {
@@ -49,58 +55,91 @@ const App: React.FC = () => {
     return { income, expense };
   }, [transactions, currentDate]);
 
-  const years = Array.from({ length: 7 }, (_, i) => 2024 + i);
-  const months = Array.from({ length: 12 }, (_, i) => i);
-
   return (
-    <div className="min-h-screen bg-[#F5F5DC] pb-32 p-4 md:p-10 text-[#2C3E50]">
-      <header className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center md:items-end mb-8 gap-6">
+    <div className="min-h-screen bg-[#F5F5DC] p-4 md:p-8 text-[#2C3E50] transition-colors duration-500">
+      <header className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center mb-8 gap-6">
         <div className="text-center md:text-left">
-          <h1 className="text-3xl font-black text-[#004d40] flex items-center justify-center md:justify-start gap-2">
-            <span>🐹</span> 부자 햄스터 가계부
+          <h1 className="text-4xl font-black text-[#004d40] flex items-center justify-center md:justify-start gap-3">
+            <span className="text-5xl">🐹</span> 부자 햄찌 가계부
           </h1>
-          <p className="text-[#004d40]/60 text-xs font-bold mt-1">부자가 되는 가장 빠른 길 🌻</p>
+          <p className="text-[#004d40]/60 text-sm font-bold mt-2 tracking-wide">해바라기씨처럼 돈을 모아봐요! 🌻</p>
         </div>
 
-        <div className="flex items-center gap-2 bg-white/50 p-1 rounded-2xl border border-[#004d40]/10 shadow-sm">
-          <div className="flex items-center px-2">
-            <button onClick={() => changeMonth(-1)} className="p-1 font-black text-[#004d40]">‹</button>
-            <span className="font-black px-2 text-sm">{currentDate.getFullYear()}년 {currentDate.getMonth() + 1}월</span>
-            <button onClick={() => changeMonth(1)} className="p-1 font-black text-[#004d40]">›</button>
+        <div className="flex flex-col md:flex-row items-center gap-3 bg-white/60 p-2 rounded-3xl border border-[#004d40]/10 shadow-lg backdrop-blur-sm">
+          <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-2xl shadow-sm">
+            <button onClick={() => changeMonth(-1)} className="text-[#004d40] font-black text-xl hover:scale-125 transition-transform p-1">‹</button>
+            <span className="font-black text-lg min-w-[120px] text-center">{currentDate.getFullYear()}년 {currentDate.getMonth() + 1}월</span>
+            <button onClick={() => changeMonth(1)} className="text-[#004d40] font-black text-xl hover:scale-125 transition-transform p-1">›</button>
           </div>
-          <div className="flex border-l border-[#004d40]/10 pl-1">
-            <button onClick={() => setActiveTab('CALENDAR')} className={`px-3 py-1.5 text-xs font-bold rounded-xl transition ${activeTab === 'CALENDAR' ? 'bg-[#004d40] text-white' : 'text-[#004d40]/60'}`}>달력</button>
-            <button onClick={() => setActiveTab('STATISTICS')} className={`px-3 py-1.5 text-xs font-bold rounded-xl transition ${activeTab === 'STATISTICS' ? 'bg-[#004d40] text-white' : 'text-[#004d40]/60'}`}>통계</button>
-            <button onClick={() => setActiveTab('FINANCE')} className={`px-3 py-1.5 text-xs font-bold rounded-xl transition ${activeTab === 'FINANCE' ? 'bg-[#004d40] text-white' : 'text-[#004d40]/60'}`}>금융</button>
-          </div>
+          
+          <nav className="flex bg-gray-200/50 p-1 rounded-2xl">
+            <button 
+              onClick={() => setActiveTab('CALENDAR')} 
+              className={`px-5 py-2 text-sm font-black rounded-xl transition-all ${activeTab === 'CALENDAR' ? 'bg-[#004d40] text-white shadow-md' : 'text-[#004d40]/50 hover:text-[#004d40]'}`}
+            >
+              달력
+            </button>
+            <button 
+              onClick={() => setActiveTab('STATISTICS')} 
+              className={`px-5 py-2 text-sm font-black rounded-xl transition-all ${activeTab === 'STATISTICS' ? 'bg-[#004d40] text-white shadow-md' : 'text-[#004d40]/50 hover:text-[#004d40]'}`}
+            >
+              통계
+            </button>
+            <button 
+              onClick={() => setActiveTab('FINANCE')} 
+              className={`px-5 py-2 text-sm font-black rounded-xl transition-all ${activeTab === 'FINANCE' ? 'bg-[#004d40] text-white shadow-md' : 'text-[#004d40]/50 hover:text-[#004d40]'}`}
+            >
+              금융
+            </button>
+          </nav>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <div className="lg:col-span-1 space-y-4">
-          <div className="bg-[#004d40] rounded-2xl p-5 text-white shadow-md">
-            <div className="text-[10px] font-bold opacity-60">이번 달 수입</div>
-            <div className="text-xl font-black">+{totals.income.toLocaleString()}원</div>
+      <main className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-8 mb-24">
+        <aside className="lg:col-span-1 space-y-5">
+          <div className="bg-[#004d40] rounded-3xl p-6 text-white shadow-xl relative overflow-hidden group">
+            <div className="absolute right-[-10px] bottom-[-10px] text-8xl opacity-10 rotate-12 group-hover:rotate-0 transition-transform">💰</div>
+            <div className="text-xs font-bold opacity-60 uppercase tracking-widest mb-1">THIS MONTH INCOME</div>
+            <div className="text-2xl font-black">+{totals.income.toLocaleString()}원</div>
           </div>
-          <div className="bg-white rounded-2xl p-5 border-2 border-[#004d40] shadow-sm">
-            <div className="text-[10px] font-bold text-[#004d40]/40">이번 달 지출</div>
-            <div className="text-xl font-black text-red-600">-{totals.expense.toLocaleString()}원</div>
+          
+          <div className="bg-white rounded-3xl p-6 border-2 border-[#004d40] shadow-md relative overflow-hidden group">
+            <div className="absolute right-[-10px] bottom-[-10px] text-8xl opacity-10 rotate-12 group-hover:rotate-0 transition-transform text-red-500">💸</div>
+            <div className="text-xs font-bold text-[#004d40]/40 uppercase tracking-widest mb-1">THIS MONTH EXPENSE</div>
+            <div className="text-2xl font-black text-red-600">-{totals.expense.toLocaleString()}원</div>
           </div>
-        </div>
 
-        <div className="lg:col-span-3">
+          <div className="bg-[#FFFFF0] rounded-3xl p-6 border border-[#D2B48C] shadow-sm">
+            <div className="text-xs font-bold text-[#004d40]/40 uppercase tracking-widest mb-1">CURRENT BALANCE</div>
+            <div className="text-2xl font-black text-[#004d40]">{(totals.income - totals.expense).toLocaleString()}원</div>
+          </div>
+        </aside>
+
+        <section className="lg:col-span-3">
           {activeTab === 'CALENDAR' && <Calendar currentDate={currentDate} transactions={transactions} onDateClick={setSelectedDate} />}
           {activeTab === 'STATISTICS' && <StatisticsView transactions={transactions} currentDate={currentDate} />}
           {activeTab === 'FINANCE' && <FinanceView fixedExpenses={fixedExpenses} setFixedExpenses={setFixedExpenses} savings={savings} setSavings={setSavings} loans={loans} setLoans={setLoans} />}
-        </div>
+        </section>
       </main>
 
       <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-40">
-        <button onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])} className="w-16 h-16 bg-[#004d40] text-white rounded-full font-black shadow-2xl hover:scale-110 active:scale-95 transition-all flex items-center justify-center text-4xl border-4 border-[#F5F5DC]">+</button>
+        <button 
+          onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])} 
+          className="w-16 h-16 bg-[#004d40] text-white rounded-full font-black shadow-[0_10px_30px_rgba(0,77,64,0.4)] hover:scale-110 active:scale-95 transition-all flex items-center justify-center text-4xl border-4 border-[#F5F5DC]"
+        >
+          +
+        </button>
       </div>
 
       <AIChatbot onTransaction={handleAddTransaction} />
-      {selectedDate && <TransactionModal date={selectedDate} onClose={() => setSelectedDate(null)} onSave={handleAddTransaction} />}
+      
+      {selectedDate && (
+        <TransactionModal 
+          date={selectedDate} 
+          onClose={() => setSelectedDate(null)} 
+          onSave={handleAddTransaction} 
+        />
+      )}
     </div>
   );
 };
