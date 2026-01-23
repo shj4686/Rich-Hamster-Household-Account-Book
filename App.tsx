@@ -11,27 +11,29 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'CALENDAR' | 'STATISTICS' | 'FINANCE'>('CALENDAR');
   const [currentDate, setCurrentDate] = useState(new Date());
   
+  // LocalStorage 데이터 로딩을 안전하게 처리
   const safeParse = (key: string, defaultValue: any) => {
     try {
       const saved = localStorage.getItem(key);
       if (!saved) return defaultValue;
-      return JSON.parse(saved);
+      const parsed = JSON.parse(saved);
+      return Array.isArray(parsed) ? parsed : defaultValue;
     } catch (e) {
       console.warn(`Localstorage parse error for ${key}`, e);
       return defaultValue;
     }
   };
 
-  const [transactions, setTransactions] = useState<Transaction[]>(() => safeParse('rich_hamster_tx_v2', []));
-  const [fixedExpenses, setFixedExpenses] = useState<FixedExpense[]>(() => safeParse('rich_hamster_fixed_v2', []));
-  const [savings, setSavings] = useState<Saving[]>(() => safeParse('rich_hamster_savings_v2', []));
-  const [loans, setLoans] = useState<Loan[]>(() => safeParse('rich_hamster_loans_v2', []));
+  const [transactions, setTransactions] = useState<Transaction[]>(() => safeParse('rich_hamster_tx_v3', []));
+  const [fixedExpenses, setFixedExpenses] = useState<FixedExpense[]>(() => safeParse('rich_hamster_fixed_v3', []));
+  const [savings, setSavings] = useState<Saving[]>(() => safeParse('rich_hamster_savings_v3', []));
+  const [loans, setLoans] = useState<Loan[]>(() => safeParse('rich_hamster_loans_v3', []));
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
-  useEffect(() => localStorage.setItem('rich_hamster_tx_v2', JSON.stringify(transactions)), [transactions]);
-  useEffect(() => localStorage.setItem('rich_hamster_fixed_v2', JSON.stringify(fixedExpenses)), [fixedExpenses]);
-  useEffect(() => localStorage.setItem('rich_hamster_savings_v2', JSON.stringify(savings)), [savings]);
-  useEffect(() => localStorage.setItem('rich_hamster_loans_v2', JSON.stringify(loans)), [loans]);
+  useEffect(() => localStorage.setItem('rich_hamster_tx_v3', JSON.stringify(transactions)), [transactions]);
+  useEffect(() => localStorage.setItem('rich_hamster_fixed_v3', JSON.stringify(fixedExpenses)), [fixedExpenses]);
+  useEffect(() => localStorage.setItem('rich_hamster_savings_v3', JSON.stringify(savings)), [savings]);
+  useEffect(() => localStorage.setItem('rich_hamster_loans_v3', JSON.stringify(loans)), [loans]);
 
   const handleAddTransaction = (data: Omit<Transaction, 'id'>) => {
     const newTx: Transaction = {
@@ -46,9 +48,11 @@ const App: React.FC = () => {
   };
 
   const totals = useMemo(() => {
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth();
     const monthTxs = transactions.filter(t => {
       const d = new Date(t.date);
-      return d.getFullYear() === currentDate.getFullYear() && d.getMonth() === currentDate.getMonth();
+      return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
     });
     const income = monthTxs.filter(t => t.type === 'INCOME').reduce((a, b) => a + b.amount, 0);
     const expense = monthTxs.filter(t => t.type === 'EXPENSE').reduce((a, b) => a + b.amount, 0);
@@ -56,7 +60,7 @@ const App: React.FC = () => {
   }, [transactions, currentDate]);
 
   return (
-    <div className="min-h-screen bg-[#F5F5DC] p-4 md:p-8 text-[#2C3E50] transition-colors duration-500">
+    <div className="min-h-screen bg-[#F5F5DC] p-4 md:p-8 text-[#2C3E50]">
       <header className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center mb-8 gap-6">
         <div className="text-center md:text-left">
           <h1 className="text-4xl font-black text-[#004d40] flex items-center justify-center md:justify-start gap-3">
@@ -116,9 +120,29 @@ const App: React.FC = () => {
         </aside>
 
         <section className="lg:col-span-3">
-          {activeTab === 'CALENDAR' && <Calendar currentDate={currentDate} transactions={transactions} onDateClick={setSelectedDate} />}
-          {activeTab === 'STATISTICS' && <StatisticsView transactions={transactions} currentDate={currentDate} />}
-          {activeTab === 'FINANCE' && <FinanceView fixedExpenses={fixedExpenses} setFixedExpenses={setFixedExpenses} savings={savings} setSavings={setSavings} loans={loans} setLoans={setLoans} />}
+          {activeTab === 'CALENDAR' && (
+            <Calendar 
+              currentDate={currentDate} 
+              transactions={transactions} 
+              onDateClick={(date) => setSelectedDate(date)} 
+            />
+          )}
+          {activeTab === 'STATISTICS' && (
+            <StatisticsView 
+              transactions={transactions} 
+              currentDate={currentDate} 
+            />
+          )}
+          {activeTab === 'FINANCE' && (
+            <FinanceView 
+              fixedExpenses={fixedExpenses} 
+              setFixedExpenses={setFixedExpenses} 
+              savings={savings} 
+              setSavings={setSavings} 
+              loans={loans} 
+              setLoans={setLoans} 
+            />
+          )}
         </section>
       </main>
 

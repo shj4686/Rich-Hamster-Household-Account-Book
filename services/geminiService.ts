@@ -2,14 +2,16 @@
 import { GoogleGenAI, Type, FunctionDeclaration } from "@google/genai";
 
 const getApiKey = () => {
-  try {
-    return process.env.API_KEY || "";
-  } catch (e) {
-    return "";
+  // process 객체와 env 객체가 존재하는지 철저히 확인
+  if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
+    return process.env.API_KEY;
   }
+  return "";
 };
 
-const ai = new GoogleGenAI({ apiKey: getApiKey() });
+const apiKey = getApiKey();
+// 키가 없더라도 인스턴스 생성 시 에러가 나지 않도록 처리 (실제 호출 시점에 에러 핸들링)
+const ai = new GoogleGenAI({ apiKey: apiKey || "dummy_key" });
 
 export const addTransactionFunction: FunctionDeclaration = {
   name: 'addTransaction',
@@ -48,6 +50,13 @@ export const chatWithHamster = async (
   history: any[], 
   onTransaction: (data: any) => void
 ) => {
+  if (!apiKey) {
+    return {
+      text: "앗! 주인님, API 키가 설정되지 않아 대화를 할 수 없츄... 환경 설정을 확인해달라츄! 🐹💦",
+      role: 'model' as const
+    };
+  }
+
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
@@ -79,6 +88,9 @@ export const chatWithHamster = async (
     };
   } catch (err) {
     console.error("Gemini Error:", err);
-    throw err;
+    return {
+      text: "앗, 대화 도중 작은 사고가 났츄! 다시 시도해주겠츄? 🐹",
+      role: 'model' as const
+    };
   }
 };
