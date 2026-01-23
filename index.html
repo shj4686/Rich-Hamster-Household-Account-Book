@@ -11,18 +11,12 @@
         body {
             font-family: 'Noto Sans KR', sans-serif;
             background-color: #F5F5DC;
-            -webkit-tap-highlight-color: transparent;
             margin: 0;
             padding: 0;
+            overflow-x: hidden;
         }
-        .scrollbar-hide::-webkit-scrollbar {
-            display: none;
-        }
-        .scrollbar-hide {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-        /* 로딩 상태 스타일 */
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
         #root:empty::before {
             content: "햄스터가 장부를 가져오는 중... 🐹";
             display: flex;
@@ -31,23 +25,24 @@
             height: 100vh;
             color: #004d40;
             font-weight: bold;
+            font-size: 1.2rem;
         }
     </style>
-<script type="importmap">
+    <script type="importmap">
 {
   "imports": {
     "react": "https://esm.sh/react@^19.2.3",
     "react-dom": "https://esm.sh/react-dom@^19.2.3",
     "react-dom/client": "https://esm.sh/react-dom@^19.2.3/client",
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "@google/genai": "https://esm.sh/@google/genai@^1.35.0"
+    "@google/genai": "https://esm.sh/@google/genai@^1.35.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/"
   }
 }
 </script>
 </head>
 <body>
     <div id="root"></div>
-    <!-- index.tsx 로드 보장 -->
-    <script type="module" src="./index.tsx"></script>
+    <script type="module" src="index.tsx"></script>
 </body>
 </html>
