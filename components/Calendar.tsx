@@ -37,7 +37,7 @@ const Calendar: React.FC<CalendarProps> = ({ currentDate, transactions, onDateCl
   const todayStr = new Date().toISOString().split('T')[0];
 
   return (
-    <div className="bg-white rounded-3xl border-2 border-[#004d40]/10 shadow-xl overflow-hidden animate-in fade-in duration-500">
+    <div className="bg-white rounded-3xl border-2 border-[#004d40]/10 shadow-xl overflow-hidden">
       <div className="grid grid-cols-7 bg-[#004d40] text-white font-bold text-center py-3">
         <div className="text-xs opacity-70">SUN</div>
         <div className="text-xs">MON</div>

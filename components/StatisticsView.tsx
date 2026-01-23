@@ -12,39 +12,40 @@ const StatisticsView: React.FC<StatisticsViewProps> = ({ transactions, currentDa
   const currentYear = currentDate.getFullYear();
   const currentMonth = currentDate.getMonth();
 
-  // 월별 요약 데이터 계산
   const monthlyData = transactions.filter(t => {
     const d = new Date(t.date);
     return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
   });
 
-  const monthlyIncome = monthlyData.filter(t => t.type === 'INCOME').reduce((acc, curr) => acc + curr.amount, 0);
-  const monthlyExpense = monthlyData.filter(t => t.type === 'EXPENSE').reduce((acc, curr) => acc + curr.amount, 0);
+  // Added explicit type for accumulator in reduce to ensure monthlyIncome and monthlyExpense are recognized as numbers
+  const monthlyIncome = monthlyData.filter(t => t.type === 'INCOME').reduce((acc: number, curr) => acc + curr.amount, 0);
+  const monthlyExpense = monthlyData.filter(t => t.type === 'EXPENSE').reduce((acc: number, curr) => acc + curr.amount, 0);
 
-  // 연도별 데이터 계산 (1월~12월)
   const yearlyMonths = Array.from({ length: 12 }, (_, i) => {
     const monthData = transactions.filter(t => {
       const d = new Date(t.date);
       return d.getFullYear() === currentYear && d.getMonth() === i;
     });
-    const income = monthData.filter(t => t.type === 'INCOME').reduce((acc, curr) => acc + curr.amount, 0);
-    const expense = monthData.filter(t => t.type === 'EXPENSE').reduce((acc, curr) => acc + curr.amount, 0);
+    // Added explicit type for accumulator in reduce operations for yearly totals
+    const income = monthData.filter(t => t.type === 'INCOME').reduce((acc: number, curr) => acc + curr.amount, 0);
+    const expense = monthData.filter(t => t.type === 'EXPENSE').reduce((acc: number, curr) => acc + curr.amount, 0);
     return { month: i + 1, income, expense };
   });
 
   const maxYearlyValue = Math.max(...yearlyMonths.map(m => Math.max(m.income, m.expense)), 1);
 
-  // 카테고리별 요약 계산 함수
   const getCategorySummary = (type: TransactionType) => {
+    // Explicitly typed the initial value of reduce and the accumulator to Record<string, number>
     const summary = monthlyData
       .filter(t => t.type === type)
       .reduce((acc: Record<string, number>, curr) => {
         acc[curr.category] = (acc[curr.category] || 0) + curr.amount;
         return acc;
-      }, {});
+      }, {} as Record<string, number>);
     
     const total = type === 'INCOME' ? monthlyIncome : monthlyExpense;
-    return Object.entries(summary)
+    // Cast Object.entries to [string, number][] to fix type errors in arithmetic operations during sort and map
+    return (Object.entries(summary) as [string, number][])
       .sort((a, b) => b[1] - a[1])
       .map(([name, amount]) => ({
         name,
@@ -56,18 +57,15 @@ const StatisticsView: React.FC<StatisticsViewProps> = ({ transactions, currentDa
   const incomeCategories = getCategorySummary('INCOME');
   const expenseCategories = getCategorySummary('EXPENSE');
   const displayCategories = activeAnalysis === 'INCOME' ? incomeCategories : expenseCategories;
-  const totalForActive = activeAnalysis === 'INCOME' ? monthlyIncome : monthlyExpense;
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
-      {/* Monthly Summary & Analysis Card */}
+    <div className="space-y-8">
       <section className="bg-white rounded-3xl p-6 md:p-8 border-2 border-[#004d40]/10 shadow-xl">
         <h2 className="text-xl font-black text-[#004d40] mb-8 flex items-center gap-2">
           📊 {currentYear}년 {currentMonth + 1}월 상세 분석
         </h2>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
-          {/* Income Clickable Summary */}
           <button 
             onClick={() => setActiveAnalysis('INCOME')}
             className={`text-left p-6 rounded-2xl border-2 transition-all duration-300 ${
@@ -83,7 +81,6 @@ const StatisticsView: React.FC<StatisticsViewProps> = ({ transactions, currentDa
             <div className="text-2xl font-black text-[#004d40]">+{monthlyIncome.toLocaleString()}원</div>
           </button>
 
-          {/* Expense Clickable Summary */}
           <button 
             onClick={() => setActiveAnalysis('EXPENSE')}
             className={`text-left p-6 rounded-2xl border-2 transition-all duration-300 ${
@@ -100,13 +97,11 @@ const StatisticsView: React.FC<StatisticsViewProps> = ({ transactions, currentDa
           </button>
         </div>
 
-        {/* Category Breakdown */}
-        <div className="animate-in fade-in zoom-in-95 duration-300">
+        <div>
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-black text-[#2C3E50]">
               {activeAnalysis === 'INCOME' ? '💰 수입' : '💸 지출'} 카테고리 순위
             </h3>
-            <span className="text-xs font-bold text-[#004d40]/60 italic">비중이 큰 순서대로 보여드려요!</span>
           </div>
 
           {displayCategories.length > 0 ? (
@@ -133,31 +128,25 @@ const StatisticsView: React.FC<StatisticsViewProps> = ({ transactions, currentDa
             </div>
           ) : (
             <div className="py-12 text-center bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
-              <p className="text-[#2C3E50]/40 font-bold">아직 기록된 {activeAnalysis === 'INCOME' ? '수입' : '지출'} 내역이 없어요. 🐹</p>
+              <p className="text-[#2C3E50]/40 font-bold">기록된 내역이 없어요. 🐹</p>
             </div>
           )}
         </div>
       </section>
 
-      {/* Yearly Trend Chart */}
       <section className="bg-white rounded-3xl p-8 border-2 border-[#004d40]/10 shadow-xl">
         <h2 className="text-xl font-black text-[#004d40] mb-8">📈 {currentYear}년 월별 흐름</h2>
-        
         <div className="h-64 flex items-end gap-2 md:gap-4 overflow-x-auto pb-4 px-2 scrollbar-hide">
           {yearlyMonths.map((m) => (
             <div key={m.month} className="flex-1 min-w-[40px] flex flex-col items-center gap-1 group">
               <div className="flex items-end gap-1 w-full justify-center">
-                {/* Income Bar */}
                 <div 
-                  className="w-2.5 md:w-4 bg-[#004d40] rounded-t-md transition-all duration-700 hover:brightness-125 cursor-help"
+                  className="w-2.5 md:w-4 bg-[#004d40] rounded-t-md transition-all duration-700 hover:brightness-125"
                   style={{ height: `${(m.income / maxYearlyValue) * 180}px` }}
-                  title={`${m.month}월 수입: ${m.income.toLocaleString()}원`}
                 />
-                {/* Expense Bar */}
                 <div 
-                  className="w-2.5 md:w-4 bg-red-400 rounded-t-md transition-all duration-700 hover:brightness-110 cursor-help"
+                  className="w-2.5 md:w-4 bg-red-400 rounded-t-md transition-all duration-700 hover:brightness-110"
                   style={{ height: `${(m.expense / maxYearlyValue) * 180}px` }}
-                  title={`${m.month}월 지출: ${m.expense.toLocaleString()}원`}
                 />
               </div>
               <span className={`text-[10px] font-bold mt-2 whitespace-nowrap ${m.month === currentMonth + 1 ? 'text-[#004d40] bg-[#004d40]/10 px-2 rounded-full' : 'text-gray-400'}`}>
@@ -166,24 +155,7 @@ const StatisticsView: React.FC<StatisticsViewProps> = ({ transactions, currentDa
             </div>
           ))}
         </div>
-        
-        <div className="flex justify-center gap-8 mt-8 pt-4 border-t border-[#004d40]/5">
-           <div className="flex items-center gap-2">
-             <div className="w-4 h-4 bg-[#004d40] rounded-md shadow-sm"></div>
-             <span className="text-xs font-black text-[#2C3E50]">수입 추이</span>
-           </div>
-           <div className="flex items-center gap-2">
-             <div className="w-4 h-4 bg-red-400 rounded-md shadow-sm"></div>
-             <span className="text-xs font-black text-[#2C3E50]">지출 추이</span>
-           </div>
-        </div>
       </section>
-
-      <div className="text-center p-4">
-        <p className="text-sm font-bold text-[#004d40]/60 italic leading-relaxed">
-          "가장 큰 항목부터 관리하는 것이 부자 햄스터의 비결이에요! 🌻✨"
-        </p>
-      </div>
     </div>
   );
 };

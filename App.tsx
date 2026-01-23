@@ -11,25 +11,21 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'CALENDAR' | 'STATISTICS' | 'FINANCE'>('CALENDAR');
   const [currentDate, setCurrentDate] = useState(new Date());
   
-  // 가계부 내역
-  const [transactions, setTransactions] = useState<Transaction[]>(() => {
-    const saved = localStorage.getItem('rich_hamster_ledger_transactions');
-    return saved ? JSON.parse(saved) : [];
-  });
+  // 데이터 로딩 시 안전한 파싱을 위한 도우미 함수
+  const safeParse = (key: string, defaultValue: any) => {
+    try {
+      const saved = localStorage.getItem(key);
+      return saved ? JSON.parse(saved) : defaultValue;
+    } catch (e) {
+      console.error(`Error parsing ${key}:`, e);
+      return defaultValue;
+    }
+  };
 
-  // 금융 데이터
-  const [fixedExpenses, setFixedExpenses] = useState<FixedExpense[]>(() => {
-    const saved = localStorage.getItem('rich_hamster_fixed_expenses');
-    return saved ? JSON.parse(saved) : [];
-  });
-  const [savings, setSavings] = useState<Saving[]>(() => {
-    const saved = localStorage.getItem('rich_hamster_savings');
-    return saved ? JSON.parse(saved) : [];
-  });
-  const [loans, setLoans] = useState<Loan[]>(() => {
-    const saved = localStorage.getItem('rich_hamster_loans');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [transactions, setTransactions] = useState<Transaction[]>(() => safeParse('rich_hamster_ledger_transactions', []));
+  const [fixedExpenses, setFixedExpenses] = useState<FixedExpense[]>(() => safeParse('rich_hamster_fixed_expenses', []));
+  const [savings, setSavings] = useState<Saving[]>(() => safeParse('rich_hamster_savings', []));
+  const [loans, setLoans] = useState<Loan[]>(() => safeParse('rich_hamster_loans', []));
 
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
@@ -95,7 +91,7 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#F5F5DC] pb-32 p-4 md:p-10 text-[#2C3E50]">
       <header className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center md:items-end mb-8 md:mb-12 gap-6">
-        <div className="flex flex-col items-center md:items-start">
+        <div className="flex flex-col items-center md:items-start shrink-0">
           <h1 className="text-3xl md:text-4xl font-extrabold text-[#004d40] tracking-tight flex items-center gap-3">
             <span className="text-4xl md:text-5xl">🐹</span>
             부자 햄스터 가계부
@@ -103,31 +99,31 @@ const App: React.FC = () => {
           <p className="text-[#004d40]/70 font-bold text-xs mt-2 ml-1">차곡차곡 모아서 부자가 되어 봐요! 🌻</p>
         </div>
 
-        {/* 날짜와 탭 메뉴가 나란히 배치되는 컨트롤 영역 */}
-        <div className="flex flex-row items-center gap-4 md:gap-6 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto scrollbar-hide no-scrollbar">
+        {/* 컨트롤 영역: 날짜와 탭이 나란히 배치 */}
+        <div className="flex flex-row items-center gap-2 md:gap-4 overflow-x-auto w-full md:w-auto scrollbar-hide no-scrollbar">
           
-          {/* 날짜 선택기 (배경 제거) */}
-          <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
+          {/* 날짜 선택기 (배경 및 테두리 제거) */}
+          <div className="flex items-center gap-0.5 md:gap-1 shrink-0">
             <button 
               onClick={() => changeMonth(-1)} 
               disabled={currentDate.getFullYear() <= 2024 && currentDate.getMonth() <= 0}
-              className="text-2xl font-black text-[#004d40] hover:scale-110 transition disabled:opacity-10 px-1"
+              className="text-xl md:text-2xl font-black text-[#004d40] hover:scale-110 transition disabled:opacity-10 px-1"
             >
               ‹
             </button>
             
-            <div className="flex items-center gap-0.5">
+            <div className="flex items-center">
               <select 
                 value={currentDate.getFullYear()} 
                 onChange={handleYearChange}
-                className="bg-transparent font-black text-[#2C3E50] text-lg md:text-xl outline-none cursor-pointer hover:text-[#004d40] transition appearance-none"
+                className="bg-transparent font-black text-[#2C3E50] text-base md:text-xl outline-none cursor-pointer hover:text-[#004d40] transition appearance-none text-center"
               >
                 {years.map(y => <option key={y} value={y}>{y}년</option>)}
               </select>
               <select 
                 value={currentDate.getMonth()} 
                 onChange={handleMonthChange}
-                className="bg-transparent font-black text-[#2C3E50] text-lg md:text-xl outline-none cursor-pointer hover:text-[#004d40] transition appearance-none"
+                className="bg-transparent font-black text-[#2C3E50] text-base md:text-xl outline-none cursor-pointer hover:text-[#004d40] transition appearance-none text-center"
               >
                 {months.map(m => <option key={m} value={m}>{m + 1}월</option>)}
               </select>
@@ -136,29 +132,29 @@ const App: React.FC = () => {
             <button 
               onClick={() => changeMonth(1)} 
               disabled={currentDate.getFullYear() >= 2030 && currentDate.getMonth() >= 11}
-              className="text-2xl font-black text-[#004d40] hover:scale-110 transition disabled:opacity-10 px-1"
+              className="text-xl md:text-2xl font-black text-[#004d40] hover:scale-110 transition disabled:opacity-10 px-1"
             >
               ›
             </button>
           </div>
 
-          {/* 탭 메뉴 (배경 제거, 간결한 언더라인 스타일) */}
-          <div className="flex items-center gap-1 md:gap-2 flex-shrink-0 border-l-2 border-[#004d40]/10 pl-4">
+          {/* 탭 메뉴 (배경 제거, 날짜 옆에 배치) */}
+          <div className="flex items-center gap-1 md:gap-2 shrink-0 border-l-2 border-[#004d40]/10 pl-2 md:pl-4 ml-1 md:ml-2">
              <button 
                onClick={() => setActiveTab('CALENDAR')}
-               className={`px-3 py-2 text-sm md:text-base font-black transition-all whitespace-nowrap ${activeTab === 'CALENDAR' ? 'text-[#004d40] border-b-4 border-[#004d40]' : 'text-[#004d40]/40 hover:text-[#004d40]/70'}`}
+               className={`px-2 md:px-3 py-2 text-sm md:text-base font-black transition-all whitespace-nowrap ${activeTab === 'CALENDAR' ? 'text-[#004d40] border-b-4 border-[#004d40]' : 'text-[#004d40]/30 hover:text-[#004d40]/60'}`}
              >
                달력
              </button>
              <button 
                onClick={() => setActiveTab('STATISTICS')}
-               className={`px-3 py-2 text-sm md:text-base font-black transition-all whitespace-nowrap ${activeTab === 'STATISTICS' ? 'text-[#004d40] border-b-4 border-[#004d40]' : 'text-[#004d40]/40 hover:text-[#004d40]/70'}`}
+               className={`px-2 md:px-3 py-2 text-sm md:text-base font-black transition-all whitespace-nowrap ${activeTab === 'STATISTICS' ? 'text-[#004d40] border-b-4 border-[#004d40]' : 'text-[#004d40]/30 hover:text-[#004d40]/60'}`}
              >
                통계
              </button>
              <button 
                onClick={() => setActiveTab('FINANCE')}
-               className={`px-3 py-2 text-sm md:text-base font-black transition-all whitespace-nowrap ${activeTab === 'FINANCE' ? 'text-[#004d40] border-b-4 border-[#004d40]' : 'text-[#004d40]/40 hover:text-[#004d40]/70'}`}
+               className={`px-2 md:px-3 py-2 text-sm md:text-base font-black transition-all whitespace-nowrap ${activeTab === 'FINANCE' ? 'text-[#004d40] border-b-4 border-[#004d40]' : 'text-[#004d40]/30 hover:text-[#004d40]/60'}`}
              >
                금융
              </button>
